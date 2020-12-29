@@ -23,12 +23,43 @@ defmodule Day07 do
         end)
       end
       %{
-        parent_color: color,
+        color: color,
         children: children
       }
     end)
   end
 
-  def build_tree(color, rules) do
+  def find_parents(rules, color) do
+    Enum.reduce_while(rules, [], fn rule, acc->
+      if rule[:color] != color do
+        present? = rule[:children] |> Enum.find(fn c -> c[:color] == color end)
+        if present? do
+          acc = Enum.concat(acc, [rule[:color]])
+          parents = find_parents(rules, rule[:color])
+          {:cont, Enum.concat(acc, parents)}
+        else
+          {:cont, acc}
+        end
+      else
+        {:cont, acc}
+      end
+    end)
+  end
+
+  def find_children(rules, color, color_first) do
+    Enum.reduce(rules, 1, fn rule, res ->
+      if rule[:color] == color do
+        sum = Enum.reduce(rule[:children], 0, fn child, acc ->
+          if child[:color] != color_first do
+            acc + child[:nb] * find_children(rules, child[:color], color_first)
+          else
+            acc
+          end
+        end)
+        res + sum
+      else
+        res
+      end
+    end)
   end
 end
